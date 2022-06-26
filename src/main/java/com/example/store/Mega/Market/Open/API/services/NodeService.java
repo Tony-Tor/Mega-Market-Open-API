@@ -6,6 +6,7 @@ import com.example.store.Mega.Market.Open.API.model.to.ShopUnitImport;
 import com.example.store.Mega.Market.Open.API.model.to.ShopUnitStatisticUnit;
 import com.example.store.Mega.Market.Open.API.repository.NodeRepository;
 import com.example.store.Mega.Market.Open.API.repository.StatisticsRepository;
+import com.example.store.Mega.Market.Open.API.utils.exceptions.BadRequestException;
 import com.example.store.Mega.Market.Open.API.utils.exceptions.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,7 @@ public class NodeService {
         this.statisticsRepository = statisticsRepository;
     }
 
-    public Node get(UUID id) {
+    public Node get(UUID id) throws NotFoundException{
         return repository.findById(id).orElseThrow(
                 ()->new NotFoundException(
                         String.format("Character not found by id: %s", id)
@@ -41,7 +42,7 @@ public class NodeService {
     }
 
 
-    public void createAll(List<ShopUnitImport> nodes, ZonedDateTime updateDate) {
+    public void createAll(List<ShopUnitImport> nodes, ZonedDateTime updateDate) throws NotFoundException, BadRequestException{
 
         List<Node> list = nodes.stream().map(f->{
 
@@ -54,14 +55,23 @@ public class NodeService {
             //children.addAll(get(id).getChildren());
 
             Node node = new Node();
-            node.setId(id);
-            node.setName(name);
-            node.setDateTime(updateDate);
-            node.setParentId(parentId);
-            node.setType(type);
-            node.setPrice(price);
-            node.setChildren(children);
-            node.setStatistics(get(id).getStatistics()); // костыль №???
+            try {
+                node.setId(id);
+                node.setName(name);
+                node.setDateTime(updateDate);
+                node.setParentId(parentId);
+                node.setType(type);
+                node.setPrice(price);
+                node.setChildren(children);
+            } catch (Exception e){
+                throw new BadRequestException("No valid json data");
+            }
+
+            try{
+                node.setStatistics(get(id).getStatistics());
+            }catch (NotFoundException e){
+                // костыль №???
+            }
 
             return node;
         }).collect(Collectors.toList());
@@ -98,7 +108,7 @@ public class NodeService {
         repository.saveAll(forSave);
     }
 
-    public void delete(UUID id){
+    public void delete(UUID id) throws NotFoundException{
         Node f = get(id);
         UUID parent = f.getParentId();
         if(parent!=null) {
@@ -140,7 +150,7 @@ public class NodeService {
         }).collect(Collectors.toList());
     }
 
-    public List<ShopUnitStatisticUnit> getStatisticFrom(UUID id, ZonedDateTime dateStart, ZonedDateTime dateEnd){
+    public List<ShopUnitStatisticUnit> getStatisticFrom(UUID id, ZonedDateTime dateStart, ZonedDateTime dateEnd) throws NotFoundException{
         Node node = get(id);
         return node.getStatistics().stream().map(k->{
                 ShopUnitStatisticUnit statisticUnit = new ShopUnitStatisticUnit();

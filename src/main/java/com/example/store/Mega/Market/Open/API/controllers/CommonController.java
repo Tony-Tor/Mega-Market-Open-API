@@ -1,11 +1,10 @@
 package com.example.store.Mega.Market.Open.API.controllers;
 
 import com.example.store.Mega.Market.Open.API.model.Node;
-import com.example.store.Mega.Market.Open.API.model.to.ShopUnit;
-import com.example.store.Mega.Market.Open.API.model.to.ShopUnitImport;
-import com.example.store.Mega.Market.Open.API.model.to.ShopUnitImportRequest;
-import com.example.store.Mega.Market.Open.API.model.to.ShopUnitStatisticResponse;
+import com.example.store.Mega.Market.Open.API.model.to.*;
 import com.example.store.Mega.Market.Open.API.services.NodeService;
+import com.example.store.Mega.Market.Open.API.utils.exceptions.BadRequestException;
+import com.example.store.Mega.Market.Open.API.utils.exceptions.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -55,6 +54,21 @@ public class CommonController {
                 service.getStatisticFrom(id,dateStartZ,dateEndZ)
         );
     }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ErrorUnit handleException404(NotFoundException e){
+        ErrorUnit error = new ErrorUnit(e.getMessage());
+        error.setCode(404);
+        return error;
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ErrorUnit handleException400(BadRequestException e){
+        ErrorUnit error = new ErrorUnit(e.getMessage());
+        error.setCode(400);
+        return error;
+    }
+
 
 
 
