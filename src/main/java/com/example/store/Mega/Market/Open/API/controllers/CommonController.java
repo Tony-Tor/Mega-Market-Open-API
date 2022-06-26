@@ -5,7 +5,9 @@ import com.example.store.Mega.Market.Open.API.model.NodeType;
 import com.example.store.Mega.Market.Open.API.model.to.ShopUnit;
 import com.example.store.Mega.Market.Open.API.model.to.ShopUnitImport;
 import com.example.store.Mega.Market.Open.API.model.to.ShopUnitImportRequest;
+import com.example.store.Mega.Market.Open.API.model.to.ShopUnitStatisticResponse;
 import com.example.store.Mega.Market.Open.API.services.NodeService;
+import org.hibernate.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -43,6 +45,30 @@ public class CommonController {
     public void deleteNode(@PathVariable UUID id){
         service.delete(id);
     }
+
+    @GetMapping(value = "sales")
+    public ShopUnitStatisticResponse getSales(@RequestParam String date){
+        ZonedDateTime dateZ = ZonedDateTime.parse(date);
+        ShopUnitStatisticResponse statisticResponse = new ShopUnitStatisticResponse(
+                service.getStatisticShop(dateZ)
+        );
+        return statisticResponse;
+    }
+
+    @GetMapping(value = "node/{id}/statistic")
+    public ShopUnitStatisticResponse getStatistic(@PathVariable UUID id,
+                                                  @RequestParam String dateStart,
+                                                  @RequestParam String dateEnd){
+        ZonedDateTime dateStartZ = ZonedDateTime.parse(dateStart);
+        ZonedDateTime dateEndZ = ZonedDateTime.parse(dateEnd);
+        ShopUnitStatisticResponse statisticResponse = new ShopUnitStatisticResponse(
+                service.getStatisticFrom(id,dateStartZ,dateEndZ)
+        );
+        return statisticResponse;
+    }
+
+
+
 
     @GetMapping(value = "test")
     public ShopUnit getNode(){

@@ -3,10 +3,13 @@ package com.example.store.Mega.Market.Open.API.services;
 import com.example.store.Mega.Market.Open.API.model.Node;
 import com.example.store.Mega.Market.Open.API.model.NodeType;
 import com.example.store.Mega.Market.Open.API.model.to.ShopUnitImport;
+import com.example.store.Mega.Market.Open.API.model.to.ShopUnitStatisticUnit;
 import com.example.store.Mega.Market.Open.API.repository.NodeRepository;
+import com.example.store.Mega.Market.Open.API.repository.StatisticsRepository;
 import com.example.store.Mega.Market.Open.API.utils.exceptions.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,11 +22,13 @@ import java.util.stream.Collectors;
 public class NodeService {
 
     private final NodeRepository repository;
+    private final StatisticsRepository statisticsRepository;
 
     static private final Logger logger = LoggerFactory.getLogger(NodeService.class);
 
-    public NodeService(NodeRepository repository) {
+    public NodeService(NodeRepository repository, StatisticsRepository statisticsRepository) {
         this.repository = repository;
+        this.statisticsRepository = statisticsRepository;
     }
 
     public Node get(UUID id) {
@@ -64,6 +69,7 @@ public class NodeService {
             node.setType(type);
             node.setPrice(price);
             node.setChildren(children);
+            node.setStatistics(get(id).getStatistics()); // костыль №???
 
             return node;
         }).collect(Collectors.toList());
@@ -96,7 +102,7 @@ public class NodeService {
             roots.add(current);
         });
 
-        roots.stream().forEach(f->f.calculatePrice());
+        roots.stream().forEach(f->f.calculatePrice(statisticsRepository));
 
         return repository.saveAll(forSave);
     }
@@ -130,8 +136,47 @@ public class NodeService {
 
         repository.deleteById(id);
 
-        root.calculatePrice();
+        root.calculatePrice(statisticsRepository);
     }
+
+    public List<ShopUnitStatisticUnit> getStatisticShop(ZonedDateTime dateTime){
+        List<Node> list = getAll();
+        return list.stream().flatMap(f->{
+            List<ShopUnitStatisticUnit> shopList = f.getStatistics().stream().map(k->{
+                ShopUnitStatisticUnit statisticUnit = new ShopUnitStatisticUnit();
+                statisticUnit.setId(f.getId().toString());
+                statisticUnit.setName(f.getName());
+                statisticUnit.setDateTime(k.getDate().toString());
+                statisticUnit.setParentId(f.getParentId() + "");
+                statisticUnit.setType(f.getType().toString());
+                statisticUnit.setPrice(k.getPrice());
+                return statisticUnit;
+            }).collect(Collectors.toList());
+            return shopList.stream();
+        }).filter(f->{
+            ZonedDateTime filter = ZonedDateTime.parse(f.getDateTime());
+            ZonedDateTime dateTimeMinusDay = dateTime.minusHours(24);
+            return filter.isBefore(dateTime)&&filter.isAfter(dateTimeMinusDay);
+        }).collect(Collectors.toList());
+    }
+
+    public List<ShopUnitStatisticUnit> getStatisticFrom(UUID id, ZonedDateTime dateStart, ZonedDateTime dateEnd){
+        Node node = get(id);
+        return node.getStatistics().stream().map(k->{
+                ShopUnitStatisticUnit statisticUnit = new ShopUnitStatisticUnit();
+                statisticUnit.setId(node.getId().toString());
+                statisticUnit.setName(node.getName());
+                statisticUnit.setDateTime(k.getDate().toString());
+                statisticUnit.setParentId(node.getParentId() + "");
+                statisticUnit.setType(node.getType().toString());
+                statisticUnit.setPrice(k.getPrice());
+                return statisticUnit;
+            }).filter(f->{
+                ZonedDateTime filter = ZonedDateTime.parse(f.getDateTime());
+                return filter.isBefore(dateEnd)&&filter.isAfter(dateStart);
+            }).collect(Collectors.toList());
+    }
+
     /* for(int i = 0; i<list.size();i++){
                 Node current = list.get(i);
                 if(current.getParentId()!=null){

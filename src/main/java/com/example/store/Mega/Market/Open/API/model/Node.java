@@ -1,9 +1,12 @@
 package com.example.store.Mega.Market.Open.API.model;
 
+import com.example.store.Mega.Market.Open.API.repository.StatisticsRepository;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -40,16 +43,30 @@ public class Node {
     int price;
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
     Set<Node> children;
+    @JsonIgnore
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
+    Set<Statistics> statistics;
 
     public void addParent(Node parent){
         parent.children.add(this);
         parentId = parent.getParentId();
     }
 
-    public int calculatePrice(){
+    public int calculatePrice(StatisticsRepository statisticsRepository){
         if(type==NodeType.CATEGORY){
-            price = children.stream().map(Node::calculatePrice).reduce(0, Integer::sum);
+            price = children.stream().map(f->f.calculatePrice(statisticsRepository)).reduce(0, Integer::sum);
         }
+
+        if (statistics == null) statistics = new HashSet<>();
+
+        Statistics statistic = new Statistics();
+        statistic.setId(0);
+        statistic.setPrice(price);
+        statistic.setDate(dateTime);
+        statistics.add(statistic);
+
+        statisticsRepository.save(statistic);
+
         return price;
     }
 
