@@ -11,7 +11,6 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Entity
 @Data
@@ -41,7 +40,7 @@ public class Node {
     Set<Node> children;
     @JsonIgnore
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    Set<Statistics> statistics = new HashSet<>();
+    List<Statistics> statistics = new ArrayList<>();
 
     public int calculatePrice(StatisticsRepository statisticsRepository){
         if(type==NodeType.CATEGORY){
@@ -51,7 +50,6 @@ public class Node {
         //if (statistics == null) statistics;
 
         Statistics statistic = new Statistics();
-        statistic.setId(0);
         statistic.setPrice(price);
         statistic.setDate(dateTime);
         statistics.add(statistic);
@@ -66,10 +64,9 @@ public class Node {
         child.parentId = id;
     }
 
-    public List<Statistics> deleteStatistic(){
-        List<Statistics> list = children.stream().flatMap(f->f.deleteStatistic().stream()).collect(Collectors.toList());
-        list.addAll(getStatistics().stream().collect(Collectors.toList()));
-        return list;
+    public void deleteStatistic(StatisticsRepository statisticsRepository){
+        children.stream().forEach(f->f.deleteStatistic(statisticsRepository));
+        getStatistics().stream().forEach(f->statisticsRepository.delete(f));
     }
 
     @Override

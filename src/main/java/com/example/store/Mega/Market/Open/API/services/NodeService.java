@@ -2,7 +2,6 @@ package com.example.store.Mega.Market.Open.API.services;
 
 import com.example.store.Mega.Market.Open.API.model.Node;
 import com.example.store.Mega.Market.Open.API.model.NodeType;
-import com.example.store.Mega.Market.Open.API.model.Statistics;
 import com.example.store.Mega.Market.Open.API.model.to.ShopUnitImport;
 import com.example.store.Mega.Market.Open.API.model.to.ShopUnitStatisticUnit;
 import com.example.store.Mega.Market.Open.API.repository.NodeRepository;
@@ -124,11 +123,9 @@ public class NodeService {
             parent = root.getParentId();
         }
 
-        List<Statistics> forDelete = f.deleteStatistic();
-
         repository.deleteById(id);
 
-        statisticsRepository.deleteAll(forDelete);
+        f.deleteStatistic(statisticsRepository);
 
         root.calculatePrice(statisticsRepository);
 

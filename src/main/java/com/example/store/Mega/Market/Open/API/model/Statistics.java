@@ -25,11 +25,11 @@ public class Statistics {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Statistics that = (Statistics) o;
-        return price == that.price && date.equals(that.date);
+        return id == that.id;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(price, date);
+        return Objects.hash(id);
     }
 }
