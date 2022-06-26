@@ -39,7 +39,7 @@ public class Node {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, orphanRemoval = true)
     Set<Node> children;
     @JsonIgnore
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy="node", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     List<Statistics> statistics = new ArrayList<>();
 
     public int calculatePrice(StatisticsRepository statisticsRepository){

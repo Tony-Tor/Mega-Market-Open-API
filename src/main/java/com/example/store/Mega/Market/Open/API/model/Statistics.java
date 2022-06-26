@@ -11,9 +11,13 @@ import java.util.Objects;
 @Data
 @Table(name = "statistics")
 public class Statistics {
+
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.AUTO)
     int id;
+    @ManyToOne
+    @JoinColumn(nullable=false)
+    Node node_id;
     @Column
     int price;
     @Column
