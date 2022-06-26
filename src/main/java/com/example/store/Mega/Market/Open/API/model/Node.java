@@ -1,6 +1,7 @@
 package com.example.store.Mega.Market.Open.API.model;
 
 import com.example.store.Mega.Market.Open.API.repository.StatisticsRepository;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
@@ -23,6 +24,8 @@ public class Node {
     String name;
     @Column
     @NotNull
+    //@LastModifiedDate
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     ZonedDateTime dateTime;
     @Column
     UUID parentId;
@@ -31,18 +34,18 @@ public class Node {
     NodeType type;
     @Column
     int price;
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, orphanRemoval = true)
     Set<Node> children;
     @JsonIgnore
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
-    Set<Statistics> statistics;
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    Set<Statistics> statistics = new HashSet<>();
 
     public int calculatePrice(StatisticsRepository statisticsRepository){
         if(type==NodeType.CATEGORY){
             price = children.stream().map(f->f.calculatePrice(statisticsRepository)).reduce(0, Integer::sum);
         }
 
-        if (statistics == null) statistics = new HashSet<>();
+        //if (statistics == null) statistics;
 
         Statistics statistic = new Statistics();
         statistic.setId(0);

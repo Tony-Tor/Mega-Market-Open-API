@@ -63,7 +63,7 @@ public class NodeService {
                 node.setPrice(price);
                 node.setChildren(children);
             } catch (Exception e){
-                throw new BadRequestException("No valid json data");
+                throw new BadRequestException("No valid json data: " + e.getMessage() + " " + e);
             }
 
             try{
