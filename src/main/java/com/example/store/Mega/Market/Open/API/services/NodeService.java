@@ -45,17 +45,16 @@ public class NodeService {
     public void createAll(List<ShopUnitImport> nodes, ZonedDateTime updateDate) throws NotFoundException, BadRequestException{
 
         List<Node> list = nodes.stream().map(f->{
-
-            UUID id = UUID.fromString(f.getId());
-            String name = f.getName();
-            UUID parentId = f.getParentId()!=null?UUID.fromString(f.getParentId()):null;
-            NodeType type = NodeType.valueOf(f.getType());
-            int price = Objects.requireNonNullElse(f.getPrice(), 0);
-            Set<Node> children = new HashSet<>();
-            //children.addAll(get(id).getChildren());
-
             Node node = new Node();
             try {
+                UUID id = UUID.fromString(f.getId());
+                String name = f.getName();
+                UUID parentId = f.getParentId()!=null?UUID.fromString(f.getParentId()):null;
+                NodeType type = NodeType.valueOf(f.getType());
+                int price = Objects.requireNonNullElse(f.getPrice(), 0);
+                Set<Node> children = new HashSet<>();
+                //children.addAll(get(id).getChildren());
+
                 node.setId(id);
                 node.setName(name);
                 node.setDateTime(updateDate);
@@ -68,7 +67,7 @@ public class NodeService {
             }
 
             try{
-                node.setStatistics(get(id).getStatistics());
+                node.setStatistics(get(node.getId()).getStatistics());
             }catch (NotFoundException e){
                 // костыль №???
             }

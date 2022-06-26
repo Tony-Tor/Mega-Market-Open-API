@@ -7,10 +7,13 @@ import com.example.store.Mega.Market.Open.API.utils.exceptions.BadRequestExcepti
 import com.example.store.Mega.Market.Open.API.utils.exceptions.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.zip.DataFormatException;
 
 @RestController
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -69,6 +72,19 @@ public class CommonController {
         return error;
     }
 
+    @ExceptionHandler(DateTimeParseException.class)
+    public ErrorUnit handleException400(DateTimeParseException e){
+        ErrorUnit error = new ErrorUnit(e.getMessage());
+        error.setCode(400);
+        return error;
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ErrorUnit handleException400(HttpMessageNotReadableException e){
+        ErrorUnit error = new ErrorUnit(Objects.requireNonNull(e.getMessage()));
+        error.setCode(400);
+        return error;
+    }
 
 
 
