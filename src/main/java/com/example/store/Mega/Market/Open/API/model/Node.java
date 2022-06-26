@@ -4,11 +4,14 @@ import com.example.store.Mega.Market.Open.API.repository.StatisticsRepository;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Entity
 @Data
@@ -37,7 +40,7 @@ public class Node {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, orphanRemoval = true)
     Set<Node> children;
     @JsonIgnore
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     Set<Statistics> statistics = new HashSet<>();
 
     public int calculatePrice(StatisticsRepository statisticsRepository){
@@ -63,7 +66,11 @@ public class Node {
         child.parentId = id;
     }
 
-
+    public List<Statistics> deleteStatistic(){
+        List<Statistics> list = children.stream().flatMap(f->f.deleteStatistic().stream()).collect(Collectors.toList());
+        list.addAll(getStatistics().stream().collect(Collectors.toList()));
+        return list;
+    }
 
     @Override
     public boolean equals(Object o) {
