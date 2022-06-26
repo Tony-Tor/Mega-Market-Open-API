@@ -6,6 +6,7 @@ import com.example.store.Mega.Market.Open.API.services.NodeService;
 import com.example.store.Mega.Market.Open.API.utils.exceptions.BadRequestException;
 import com.example.store.Mega.Market.Open.API.utils.exceptions.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
@@ -58,6 +59,7 @@ public class CommonController {
         );
     }
 
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(NotFoundException.class)
     public ErrorUnit handleException404(NotFoundException e){
         ErrorUnit error = new ErrorUnit(e.getMessage());
@@ -65,6 +67,7 @@ public class CommonController {
         return error;
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(BadRequestException.class)
     public ErrorUnit handleException400(BadRequestException e){
         ErrorUnit error = new ErrorUnit(e.getMessage());
@@ -72,6 +75,7 @@ public class CommonController {
         return error;
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(DateTimeParseException.class)
     public ErrorUnit handleException400(DateTimeParseException e){
         ErrorUnit error = new ErrorUnit(e.getMessage());
@@ -79,13 +83,13 @@ public class CommonController {
         return error;
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ErrorUnit handleException400(HttpMessageNotReadableException e){
         ErrorUnit error = new ErrorUnit(Objects.requireNonNull(e.getMessage()));
         error.setCode(400);
         return error;
     }
-
     @GetMapping(value = "test")
     public ShopUnit getNode(){
         return new ShopUnit();

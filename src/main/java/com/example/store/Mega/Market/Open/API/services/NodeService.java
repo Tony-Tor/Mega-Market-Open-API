@@ -123,6 +123,7 @@ public class NodeService {
             parent = root.getParentId();
         }
 
+        statisticsRepository.deleteAll(f.getStatistics());
         repository.deleteById(id);
 
         root.calculatePrice(statisticsRepository);
