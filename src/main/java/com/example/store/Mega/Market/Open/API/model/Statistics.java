@@ -6,7 +6,6 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.ZonedDateTime;
 import java.util.Objects;
-import java.util.UUID;
 
 @Entity
 @Data

@@ -1,26 +1,17 @@
 package com.example.store.Mega.Market.Open.API.controllers;
 
 import com.example.store.Mega.Market.Open.API.model.Node;
-import com.example.store.Mega.Market.Open.API.model.NodeType;
 import com.example.store.Mega.Market.Open.API.model.to.ShopUnit;
 import com.example.store.Mega.Market.Open.API.model.to.ShopUnitImport;
 import com.example.store.Mega.Market.Open.API.model.to.ShopUnitImportRequest;
 import com.example.store.Mega.Market.Open.API.model.to.ShopUnitStatisticResponse;
 import com.example.store.Mega.Market.Open.API.services.NodeService;
-import org.hibernate.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import javax.persistence.Column;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.validation.constraints.NotNull;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -49,10 +40,9 @@ public class CommonController {
     @GetMapping(value = "sales")
     public ShopUnitStatisticResponse getSales(@RequestParam String date){
         ZonedDateTime dateZ = ZonedDateTime.parse(date);
-        ShopUnitStatisticResponse statisticResponse = new ShopUnitStatisticResponse(
+        return new ShopUnitStatisticResponse(
                 service.getStatisticShop(dateZ)
         );
-        return statisticResponse;
     }
 
     @GetMapping(value = "node/{id}/statistic")
@@ -61,10 +51,9 @@ public class CommonController {
                                                   @RequestParam String dateEnd){
         ZonedDateTime dateStartZ = ZonedDateTime.parse(dateStart);
         ZonedDateTime dateEndZ = ZonedDateTime.parse(dateEnd);
-        ShopUnitStatisticResponse statisticResponse = new ShopUnitStatisticResponse(
+        return new ShopUnitStatisticResponse(
                 service.getStatisticFrom(id,dateStartZ,dateEndZ)
         );
-        return statisticResponse;
     }
 
 

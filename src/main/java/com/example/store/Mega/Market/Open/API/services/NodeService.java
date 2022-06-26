@@ -9,13 +9,10 @@ import com.example.store.Mega.Market.Open.API.repository.StatisticsRepository;
 import com.example.store.Mega.Market.Open.API.utils.exceptions.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,7 +31,7 @@ public class NodeService {
     public Node get(UUID id) {
         return repository.findById(id).orElseThrow(
                 ()->new NotFoundException(
-                        String.format("Character not found by id: %s", id.toString())
+                        String.format("Character not found by id: %s", id)
                 )
         );
     }
@@ -44,17 +41,12 @@ public class NodeService {
     }
 
 
-    public Node create(Node obj) {
-        return repository.save(obj);
-    }
-
-    public Iterable<Node> createAll(List<ShopUnitImport> nodes, ZonedDateTime updateDate) {
+    public void createAll(List<ShopUnitImport> nodes, ZonedDateTime updateDate) {
 
         List<Node> list = nodes.stream().map(f->{
 
             UUID id = UUID.fromString(f.getId());
             String name = f.getName();
-            ZonedDateTime dateTime = updateDate;
             UUID parentId = f.getParentId()!=null?UUID.fromString(f.getParentId()):null;
             NodeType type = NodeType.valueOf(f.getType());
             int price = Objects.requireNonNullElse(f.getPrice(), 0);
@@ -64,7 +56,7 @@ public class NodeService {
             Node node = new Node();
             node.setId(id);
             node.setName(name);
-            node.setDateTime(dateTime);
+            node.setDateTime(updateDate);
             node.setParentId(parentId);
             node.setType(type);
             node.setPrice(price);
@@ -78,10 +70,9 @@ public class NodeService {
 
         repository.saveAll(list);
 
-        Set<Node> forSave = new HashSet<>();
-        forSave.addAll(list);
+        Set<Node> forSave = new HashSet<>(list);
 
-        list.stream().forEach(f->{
+        list.forEach(f->{
                     if(f.getParentId() == null) return;
                     Node node = list.stream().filter(n->n.getId().equals(f.getParentId())).findAny().orElse(null);
                     if (node == null) node = get(f.getParentId());
@@ -102,21 +93,10 @@ public class NodeService {
             roots.add(current);
         });
 
-        roots.stream().forEach(f->f.calculatePrice(statisticsRepository));
+        roots.forEach(f->f.calculatePrice(statisticsRepository));
 
-        return repository.saveAll(forSave);
+        repository.saveAll(forSave);
     }
-
-    /*@Transactional
-    public Node update(int id, NodeTo obj) {
-        Node node  = new Node();
-        character.setName(obj.getName());
-        character.setDescription(obj.getDescription());
-        character.setCreated(obj.getCreated());
-        character.setImage(imageService.get(obj.getImage()));
-        character.setId(id);
-        return repository.save(node);
-    }*/
 
     public void delete(UUID id){
         Node f = get(id);

@@ -3,14 +3,9 @@ package com.example.store.Mega.Market.Open.API.model;
 import com.example.store.Mega.Market.Open.API.repository.StatisticsRepository;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.Type;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -23,11 +18,6 @@ public class Node {
     //@GenericGenerator(name = "uuid2", strategy = "uuid2")
     //@GeneratedValue(strategy = GenerationType.IDENTITY, generator = "uuid2")
     UUID id; // Пока не понял как создавать UUID вбд
-    /*@Id
-    @GenericGenerator(name = "uuid2", strategy = "uuid2")
-    @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "uuid2")
-    @Column(length = 36, nullable = false, updatable = false)
-    String id;*/
     @Column
     @NotNull
     String name;
@@ -47,11 +37,6 @@ public class Node {
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true)
     Set<Statistics> statistics;
 
-    public void addParent(Node parent){
-        parent.children.add(this);
-        parentId = parent.getParentId();
-    }
-
     public int calculatePrice(StatisticsRepository statisticsRepository){
         if(type==NodeType.CATEGORY){
             price = children.stream().map(f->f.calculatePrice(statisticsRepository)).reduce(0, Integer::sum);
@@ -69,10 +54,6 @@ public class Node {
 
         return price;
     }
-
-    /*public UUID getIdAsUUID() {
-        return UUID.fromString(id);
-    }*/
 
     public void addChild(Node child){
         children.add(child);
