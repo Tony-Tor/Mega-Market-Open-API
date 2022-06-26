@@ -86,9 +86,6 @@ public class CommonController {
         return error;
     }
 
-
-
-
     @GetMapping(value = "test")
     public ShopUnit getNode(){
         return new ShopUnit();
