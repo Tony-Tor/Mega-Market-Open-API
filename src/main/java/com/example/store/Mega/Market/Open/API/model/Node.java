@@ -14,12 +14,10 @@ import java.util.*;
 @Entity
 @Data
 @Table(name = "node")
-public class Node implements INode{
+public class Node{
 
     @Id
-    //@GenericGenerator(name = "uuid2", strategy = "uuid2")
-    //@GeneratedValue(strategy = GenerationType.IDENTITY, generator = "uuid2")
-    UUID id; // Пока не понял как создавать UUID вбд
+    UUID id;
     @Column
     @Size(max = 255)
     String url;
@@ -46,8 +44,6 @@ public class Node implements INode{
             size = children.stream().map(f->f.calculatePrice(historyRepository)).reduce(0, Integer::sum);
         }
 
-        //if (statistics == null) statistics;
-
         History statistic = new History();
         statistic.setPrice(size);
         statistic.setDate(date);
@@ -64,12 +60,12 @@ public class Node implements INode{
     }
 
     public void deleteStatistic(HistoryRepository historyRepository){
-        children.stream().forEach(f->f.deleteStatistic(historyRepository));
-        getHistories().stream().forEach(f-> historyRepository.delete(f));
+        children.forEach(f->f.deleteStatistic(historyRepository));
+        getHistories().forEach(historyRepository::delete);
     }
 
     public void nullableChildren(){
-        children.stream().forEach(f->f.nullableChildren());
+        children.forEach(Node::nullableChildren);
         if(children.size() == 0) children = null;
     }
 

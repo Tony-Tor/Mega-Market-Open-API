@@ -32,16 +32,6 @@ public class CommonController {
         Node node = service.get(id);
         //if(node.getChildren().size() == 0)node.setChildren(null);
         node.nullableChildren();
-        /*
-         SystemItemNullChildren systemItem = new SystemItemNullChildren();
-            systemItem.setId(node.getId().toString());
-            systemItem.setDate(node.getDate().toString());
-            systemItem.setParentId(node.getParentId().toString());
-            systemItem.setType(node.getType().toString());
-            systemItem.setUrl(node.getUrl());
-            systemItem.setSize(node.getSize());
-            return systemItem;
-        */
 
         return node;
     }

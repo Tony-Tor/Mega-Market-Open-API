@@ -31,17 +31,11 @@ public class NodeService {
 
     public Node get(UUID id) throws NotFoundException{
 
-        Node node = repository.findById(id).orElseThrow(
+        return repository.findById(id).orElseThrow(
                 ()->new NotFoundException(
                         String.format("Character not found by id: %s", id)
                 )
         );
-
-        /*if(node.getChildren().size() == 0){
-            node.setChildren(null);
-        }*/
-
-        return node;
     }
 
     public List<Node> getAll() {
