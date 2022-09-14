@@ -2,10 +2,10 @@ package com.example.store.Mega.Market.Open.API.services;
 
 import com.example.store.Mega.Market.Open.API.model.Node;
 import com.example.store.Mega.Market.Open.API.model.NodeType;
-import com.example.store.Mega.Market.Open.API.model.to.ShopUnitImport;
-import com.example.store.Mega.Market.Open.API.model.to.ShopUnitStatisticUnit;
+import com.example.store.Mega.Market.Open.API.model.to.SystemItemImport;
+import com.example.store.Mega.Market.Open.API.model.to.SystemItemHistoryUnit;
 import com.example.store.Mega.Market.Open.API.repository.NodeRepository;
-import com.example.store.Mega.Market.Open.API.repository.StatisticsRepository;
+import com.example.store.Mega.Market.Open.API.repository.HistoryRepository;
 import com.example.store.Mega.Market.Open.API.utils.exceptions.BadRequestException;
 import com.example.store.Mega.Market.Open.API.utils.exceptions.NotFoundException;
 import org.slf4j.Logger;
@@ -20,21 +20,28 @@ import java.util.stream.Collectors;
 public class NodeService {
 
     private final NodeRepository repository;
-    private final StatisticsRepository statisticsRepository;
+    private final HistoryRepository historyRepository;
 
     static private final Logger logger = LoggerFactory.getLogger(NodeService.class);
 
-    public NodeService(NodeRepository repository, StatisticsRepository statisticsRepository) {
+    public NodeService(NodeRepository repository, HistoryRepository historyRepository) {
         this.repository = repository;
-        this.statisticsRepository = statisticsRepository;
+        this.historyRepository = historyRepository;
     }
 
     public Node get(UUID id) throws NotFoundException{
-        return repository.findById(id).orElseThrow(
+
+        Node node = repository.findById(id).orElseThrow(
                 ()->new NotFoundException(
                         String.format("Character not found by id: %s", id)
                 )
         );
+
+        /*if(node.getChildren().size() == 0){
+            node.setChildren(null);
+        }*/
+
+        return node;
     }
 
     public List<Node> getAll() {
@@ -42,32 +49,32 @@ public class NodeService {
     }
 
 
-    public void createAll(List<ShopUnitImport> nodes, ZonedDateTime updateDate) throws NotFoundException, BadRequestException{
+    public void createAll(List<SystemItemImport> nodes, ZonedDateTime updateDate) throws NotFoundException, BadRequestException{
 
         List<Node> list = nodes.stream().map(f->{
             Node node = new Node();
             try {
                 UUID id = UUID.fromString(f.getId());
-                String name = f.getName();
+                String name = f.getUrl();
                 UUID parentId = f.getParentId()!=null?UUID.fromString(f.getParentId()):null;
                 NodeType type = NodeType.valueOf(f.getType());
-                int price = Objects.requireNonNullElse(f.getPrice(), 0);
+                int price = Objects.requireNonNullElse(f.getSize(), 0);
                 Set<Node> children = new HashSet<>();
                 //children.addAll(get(id).getChildren());
 
                 node.setId(id);
-                node.setName(name);
-                node.setDateTime(updateDate);
+                node.setUrl(name);
+                node.setDate(updateDate);
                 node.setParentId(parentId);
                 node.setType(type);
-                node.setPrice(price);
+                node.setSize(price);
                 node.setChildren(children);
             } catch (Exception e){
                 throw new BadRequestException("No valid json data: " + e.getMessage() + " " + e);
             }
 
             try{
-                node.setStatistics(get(node.getId()).getStatistics());
+                node.setHistories(get(node.getId()).getHistories());
             }catch (NotFoundException e){
                 // костыль №???
             }
@@ -91,18 +98,18 @@ public class NodeService {
 
         Set<Node> roots = new HashSet<>();
 
-        list.stream().filter(f->f.getType().equals(NodeType.OFFER)).forEach(f-> {
+        list.stream().filter(f->f.getType().equals(NodeType.FILE)).forEach(f-> {
             UUID parent = f.getParentId();
             Node current = f;
             while (parent!=null){
                 current = get(parent);
-                current.setDateTime(updateDate);
+                current.setDate(updateDate);
                 parent = current.getParentId();
             }
             roots.add(current);
         });
 
-        roots.forEach(f->f.calculatePrice(statisticsRepository));
+        roots.forEach(f->f.calculatePrice(historyRepository));
 
         repository.saveAll(forSave);
     }
@@ -125,47 +132,47 @@ public class NodeService {
 
         repository.deleteById(id);
 
-        f.deleteStatistic(statisticsRepository);
+        f.deleteStatistic(historyRepository);
 
-        root.calculatePrice(statisticsRepository);
+        root.calculatePrice(historyRepository);
 
 
     }
 
-    public List<ShopUnitStatisticUnit> getStatisticShop(ZonedDateTime dateTime){
+    public List<SystemItemHistoryUnit> getStatisticShop(ZonedDateTime dateTime){
         List<Node> list = getAll();
         return list.stream().flatMap(f->{
-            List<ShopUnitStatisticUnit> shopList = f.getStatistics().stream().map(k->{
-                ShopUnitStatisticUnit statisticUnit = new ShopUnitStatisticUnit();
+            List<SystemItemHistoryUnit> shopList = f.getHistories().stream().map(k->{
+                SystemItemHistoryUnit statisticUnit = new SystemItemHistoryUnit();
                 statisticUnit.setId(f.getId().toString());
-                statisticUnit.setName(f.getName());
-                statisticUnit.setDateTime(k.getDate().toString());
+                statisticUnit.setUrl(f.getUrl());
+                statisticUnit.setDate(k.getDate().toString());
                 statisticUnit.setParentId(f.getParentId() + "");
                 statisticUnit.setType(f.getType().toString());
-                statisticUnit.setPrice(k.getPrice());
+                statisticUnit.setSize(k.getPrice());
                 return statisticUnit;
             }).collect(Collectors.toList());
             return shopList.stream();
         }).filter(f->{
-            ZonedDateTime filter = ZonedDateTime.parse(f.getDateTime());
+            ZonedDateTime filter = ZonedDateTime.parse(f.getDate());
             ZonedDateTime dateTimeMinusDay = dateTime.minusHours(24);
             return filter.isBefore(dateTime)&&filter.isAfter(dateTimeMinusDay);
         }).collect(Collectors.toList());
     }
 
-    public List<ShopUnitStatisticUnit> getStatisticFrom(UUID id, ZonedDateTime dateStart, ZonedDateTime dateEnd) throws NotFoundException{
+    public List<SystemItemHistoryUnit> getStatisticFrom(UUID id, ZonedDateTime dateStart, ZonedDateTime dateEnd) throws NotFoundException{
         Node node = get(id);
-        return node.getStatistics().stream().map(k->{
-                ShopUnitStatisticUnit statisticUnit = new ShopUnitStatisticUnit();
+        return node.getHistories().stream().map(k->{
+                SystemItemHistoryUnit statisticUnit = new SystemItemHistoryUnit();
                 statisticUnit.setId(node.getId().toString());
-                statisticUnit.setName(node.getName());
-                statisticUnit.setDateTime(k.getDate().toString());
+                statisticUnit.setUrl(node.getUrl());
+                statisticUnit.setDate(k.getDate().toString());
                 statisticUnit.setParentId(node.getParentId() + "");
                 statisticUnit.setType(node.getType().toString());
-                statisticUnit.setPrice(k.getPrice());
+                statisticUnit.setSize(k.getPrice());
                 return statisticUnit;
             }).filter(f->{
-                ZonedDateTime filter = ZonedDateTime.parse(f.getDateTime());
+                ZonedDateTime filter = ZonedDateTime.parse(f.getDate());
                 return filter.isBefore(dateEnd)&&filter.isAfter(dateStart);
             }).collect(Collectors.toList());
     }

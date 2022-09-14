@@ -15,7 +15,14 @@ services:
     image: mega-market-open-api:latest
     # Give the container the name web-app. You can changes to something else.
     container_name: web-app-mega-market
-    restart: always
+
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+    restart: unless-stopped
 
     build: .
 
@@ -24,9 +31,11 @@ services:
       spring.datasource.username: postgres
       spring.datasource.password: password
 
+
+
     # Forward the exposed port 8080 on the container to port 8080 on the host machine
     ports:
-      - "80:8080"
+      - "8080:8080"
 
     networks:
       - backend
@@ -41,7 +50,13 @@ services:
 
     # Give the container the name postgres-db. You can changes to something else.
     container_name: postgres-db
-    #restart: always
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+    restart: unless-stopped
     # Set a volume some that database is not lost after shutting down the container.
     # I used the name postgres-data but you can changed it to something else.
     volumes:

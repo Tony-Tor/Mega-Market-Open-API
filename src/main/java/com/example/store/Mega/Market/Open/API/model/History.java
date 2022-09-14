@@ -10,7 +10,7 @@ import java.util.Objects;
 @Entity
 @Data
 @Table(name = "statistics")
-public class Statistics {
+public class History {
     @Id
     @GeneratedValue
     int id;
@@ -24,7 +24,7 @@ public class Statistics {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Statistics that = (Statistics) o;
+        History that = (History) o;
         return id == that.id;
     }
 

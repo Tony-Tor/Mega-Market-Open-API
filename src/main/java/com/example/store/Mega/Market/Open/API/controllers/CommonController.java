@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.zip.DataFormatException;
 
 @RestController
 @RequestMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -30,14 +29,28 @@ public class CommonController {
     @GetMapping(value = "nodes/{id}")
     public Node getNode(@PathVariable UUID id){
         logger.info("Get node with UUID: " + id);
-        return service.get(id);
+        Node node = service.get(id);
+        //if(node.getChildren().size() == 0)node.setChildren(null);
+        node.nullableChildren();
+        /*
+         SystemItemNullChildren systemItem = new SystemItemNullChildren();
+            systemItem.setId(node.getId().toString());
+            systemItem.setDate(node.getDate().toString());
+            systemItem.setParentId(node.getParentId().toString());
+            systemItem.setType(node.getType().toString());
+            systemItem.setUrl(node.getUrl());
+            systemItem.setSize(node.getSize());
+            return systemItem;
+        */
+
+        return node;
     }
 
     @PostMapping(value = "imports")
-    public void importNode(@RequestBody ShopUnitImportRequest request){
+    public void importNode(@RequestBody SystemItemImportRequest request){
         logger.info("Add " + request.getItems().size() + "items");
         ZonedDateTime updateDate = ZonedDateTime.parse(request.getUpdateDate());
-        List<ShopUnitImport> nodes = request.getItems();
+        List<SystemItemImport> nodes = request.getItems();
         service.createAll(nodes, updateDate);
     }
 
@@ -47,23 +60,23 @@ public class CommonController {
         service.delete(id);
     }
 
-    @GetMapping(value = "sales")
-    public ShopUnitStatisticResponse getSales(@RequestParam String date){
+    @GetMapping(value = "updates")
+    public SystemItemHistoryResponse getSales(@RequestParam String date){
         logger.info("Get sales statistic from: " + date);
         ZonedDateTime dateZ = ZonedDateTime.parse(date);
-        return new ShopUnitStatisticResponse(
+        return new SystemItemHistoryResponse(
                 service.getStatisticShop(dateZ)
         );
     }
 
-    @GetMapping(value = "node/{id}/statistic")
-    public ShopUnitStatisticResponse getStatistic(@PathVariable UUID id,
+    @GetMapping(value = "node/{id}/history")
+    public SystemItemHistoryResponse getStatistic(@PathVariable UUID id,
                                                   @RequestParam String dateStart,
                                                   @RequestParam String dateEnd){
         logger.info("Get statistic from: " + dateStart + " to: " + dateEnd);
         ZonedDateTime dateStartZ = ZonedDateTime.parse(dateStart);
         ZonedDateTime dateEndZ = ZonedDateTime.parse(dateEnd);
-        return new ShopUnitStatisticResponse(
+        return new SystemItemHistoryResponse(
                 service.getStatisticFrom(id,dateStartZ,dateEndZ)
         );
     }
@@ -100,8 +113,8 @@ public class CommonController {
         return error;
     }
     @GetMapping(value = "test")
-    public ShopUnit getNode(){
-        return new ShopUnit();
+    public SystemItem getNode(){
+        return new SystemItem();
     }
 
 

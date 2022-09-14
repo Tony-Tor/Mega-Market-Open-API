@@ -6,11 +6,7 @@ import lombok.NonNull;
 import java.util.List;
 
 @Data
-public class ShopUnitImportRequest {
-
+public class SystemItemHistoryResponse {
     @NonNull
-    List<ShopUnitImport> items;
-    @NonNull
-    String updateDate;
-
+    List<SystemItemHistoryUnit> items;
 }

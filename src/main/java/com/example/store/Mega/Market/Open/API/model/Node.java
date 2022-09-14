@@ -1,62 +1,61 @@
 package com.example.store.Mega.Market.Open.API.model;
 
-import com.example.store.Mega.Market.Open.API.repository.StatisticsRepository;
+import com.example.store.Mega.Market.Open.API.repository.HistoryRepository;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.time.ZonedDateTime;
 import java.util.*;
 
 @Entity
 @Data
 @Table(name = "node")
-public class Node {
+public class Node implements INode{
 
     @Id
     //@GenericGenerator(name = "uuid2", strategy = "uuid2")
     //@GeneratedValue(strategy = GenerationType.IDENTITY, generator = "uuid2")
     UUID id; // Пока не понял как создавать UUID вбд
     @Column
-    @NotNull
-    String name;
-    @Column
+    @Size(max = 255)
+    String url;
+    @Column(name = "date_time")
     @NotNull
     //@LastModifiedDate
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-    ZonedDateTime dateTime;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    ZonedDateTime date;
     @Column
     UUID parentId;
     @NotNull
     @Column
     NodeType type;
     @Column
-    int price;
+    Integer size;
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, orphanRemoval = true)
-    Set<Node> children;
+    Set<Node> children = null;
     @JsonIgnore
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    List<Statistics> statistics = new ArrayList<>();
+    List<History> histories = new ArrayList<>();
 
-    public int calculatePrice(StatisticsRepository statisticsRepository){
-        if(type==NodeType.CATEGORY){
-            price = children.stream().map(f->f.calculatePrice(statisticsRepository)).reduce(0, Integer::sum);
+    public int calculatePrice(HistoryRepository historyRepository){
+        if(type==NodeType.FOLDER){
+            size = children.stream().map(f->f.calculatePrice(historyRepository)).reduce(0, Integer::sum);
         }
 
         //if (statistics == null) statistics;
 
-        Statistics statistic = new Statistics();
-        statistic.setPrice(price);
-        statistic.setDate(dateTime);
-        statistics.add(statistic);
+        History statistic = new History();
+        statistic.setPrice(size);
+        statistic.setDate(date);
+        histories.add(statistic);
 
-        statisticsRepository.save(statistic);
+        historyRepository.save(statistic);
 
-        return price;
+        return size;
     }
 
     public void addChild(Node child){
@@ -64,9 +63,14 @@ public class Node {
         child.parentId = id;
     }
 
-    public void deleteStatistic(StatisticsRepository statisticsRepository){
-        children.stream().forEach(f->f.deleteStatistic(statisticsRepository));
-        getStatistics().stream().forEach(f->statisticsRepository.delete(f));
+    public void deleteStatistic(HistoryRepository historyRepository){
+        children.stream().forEach(f->f.deleteStatistic(historyRepository));
+        getHistories().stream().forEach(f-> historyRepository.delete(f));
+    }
+
+    public void nullableChildren(){
+        children.stream().forEach(f->f.nullableChildren());
+        if(children.size() == 0) children = null;
     }
 
     @Override

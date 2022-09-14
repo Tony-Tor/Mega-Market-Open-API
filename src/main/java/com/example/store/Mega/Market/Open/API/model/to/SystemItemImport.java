@@ -3,10 +3,10 @@ package com.example.store.Mega.Market.Open.API.model.to;
 import lombok.Data;
 
 @Data
-public class ShopUnitImport {
+public class SystemItemImport {
     String id = null;
-    String name = null;
+    String url = null;
     String parentId = null;
     String type = null;
-    int price = 0;
+    int size = 0;
 }
